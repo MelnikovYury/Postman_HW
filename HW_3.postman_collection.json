@@ -478,6 +478,21 @@
 			"item": [
 				{
 					"name": "/currency",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/*1) Можете взять любой объект из присланного списка, используйте js random.\r",
+									"В объекте возьмите Cur_ID и передать через окружение в следующий запрос.*/\r",
+									"var json_resp = pm.response.json();\r",
+									"var random_object = json_resp[Math.floor(Math.random()*json_resp.length)];\r",
+									"pm.environment.set(\"curr_code\", random_object.Cur_ID);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -503,6 +518,136 @@
 							"port": "80",
 							"path": [
 								"currency"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/curr_byn",
+			"item": [
+				{
+					"name": "/curr_byn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//1) Статус код 200\r",
+									"pm.test(\"Ckeck 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    });\r",
+									"    \r",
+									"//2) Проверка структуры json в ответе.\r",
+									"var json_resp = pm.response.json();\r",
+									"var schema = {\r",
+									"    \"type\" : \"object\",\r",
+									"    \"properties\": {\r",
+									"        \"Cur_Abbreviation\" : {\r",
+									"            \"type\" : \"string\"\r",
+									"        },\r",
+									"        \"Cur_ID\" : {\r",
+									"            \"type\" : \"integer\"\r",
+									"        },\r",
+									"        \"Cur_Name\" : {\r",
+									"            \"type\" : \"string\"\r",
+									"        },\r",
+									"        \"Cur_OfficialRate\" : {\r",
+									"            \"type\" : \"number\"\r",
+									"        },\r",
+									"        \"Cur_Scale\" : {\r",
+									"            \"type\" : \"integer\"\r",
+									"        },\r",
+									"        \"Date\" : {\r",
+									"            \"type\" : \"string\"\r",
+									"        }\r",
+									"    },\r",
+									"    \"required\" : [\"Cur_Abbreviation\", \"Cur_ID\", \"Cur_Name\", \"Cur_OfficialRate\", \"Cur_Scale\", \"Date\"]\r",
+									"};\r",
+									"pm.test(\"JSON_ckeck\", function () {\r",
+									"    pm.expect(tv4.validate(json_resp, schema)).to.be.true;\r",
+									"});\r",
+									"\r",
+									"/*1) получить список валют\r",
+									"2) итерировать список валют\r",
+									"3) в каждой итерации отправлять запрос на сервер для получения курса каждой валюты\r",
+									"4) если возвращается 500 код, переходим к следующей итреации\r",
+									"5) если получаем 200 код, проверяем response json на наличие поля \"Cur_OfficialRate\"\r",
+									"6) если поле есть, пишем в консоль инфу про фалюту в виде response\r",
+									"{\r",
+									"    \"Cur_Abbreviation\": str\r",
+									"    \"Cur_ID\": int,\r",
+									"    \"Cur_Name\": str,\r",
+									"    \"Cur_OfficialRate\": float,\r",
+									"    \"Cur_Scale\": int,\r",
+									"    \"Date\": str\r",
+									"}\r",
+									"7) переходим к следующей итерации*/\r",
+									"\r",
+									"for (var i = 0; i < json_resp.lenght; i ++){\r",
+									"\tcur_id = json_resp[i].Cur_ID;\r",
+									"    const postRequest = {\r",
+									"\turl: 'http://54.157.99.22:80/curr_byn',\r",
+									"\tmethod: 'POST',\r",
+									"\theader: {\r",
+									"\t'Content-Type' : 'application/json'\r",
+									"    },\r",
+									"\tbody: {\r",
+									"\t mode: 'formdata',\r",
+									"\t formdata: [\r",
+									"\t    {key: 'auth_token', value: token},\t\t\t\r",
+									"        {key: 'curr_code', value: '${cur_id}'}\r",
+									"\t\t ]}\r",
+									"\t};\r",
+									"\tpm.sendRequest(postRequest,(err,response) => {\r",
+									"\t\tif (pm.response.code === 200){\r",
+									"\t\t\tlet r = responce.json();\r",
+									"\t\t\tconsole.log(r);\r",
+									"\t\tif (json_resp.hasOwnProperty(\"Cur_OfficialRate\"))\r",
+									"\t\t   {console.log(json_resp)}\r",
+									"\t\t}\r",
+									"\t\tif (pm.response.code === 500){\r",
+									"\t\t\t return r\r",
+									"\t\t    }\r",
+									"\t     else {console.log('error')}})};\r",
+									"\t\t\t\t\t\t\t"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "auth_token",
+									"value": "{{auth_token}}",
+									"type": "text"
+								},
+								{
+									"key": "curr_code",
+									"value": "{{curr_code}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://54.157.99.22:80/curr_byn",
+							"protocol": "http",
+							"host": [
+								"54",
+								"157",
+								"99",
+								"22"
+							],
+							"port": "80",
+							"path": [
+								"curr_byn"
 							]
 						}
 					},
